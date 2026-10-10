@@ -15,6 +15,22 @@ export interface GeminiAnalysisResponse {
 }
 
 /**
+ * Extracts a clean JSON substring from an LLM response even if surrounded by markdown or preamble.
+ */
+function extractJsonSubstring(text: string): string {
+  const cleaned = text
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    return cleaned.substring(firstBrace, lastBrace + 1);
+  }
+  return cleaned;
+}
+
+/**
  * Call OpenRouter OpenAI-compatible chat completion endpoint with vision.
  */
 async function callOpenRouterVision(
@@ -22,6 +38,8 @@ async function callOpenRouterVision(
   base64Jpeg: string,
   apiKey: string
 ): Promise<GeminiAnalysisResponse> {
+  const cleanBase64 = base64Jpeg.replace(/^data:image\/[a-z]+;base64,/i, '').trim();
+
   const schemaInstructions = `${SYSTEM_PROMPT}
 
 You MUST return strictly valid JSON matching this schema:
@@ -60,7 +78,7 @@ Output ONLY raw JSON with no explanation or conversational markdown.`;
               {
                 type: 'image_url',
                 image_url: {
-                  url: `data:image/jpeg;base64,${base64Jpeg}`,
+                  url: `data:image/jpeg;base64,${cleanBase64}`,
                 },
               },
             ],
@@ -79,17 +97,20 @@ Output ONLY raw JSON with no explanation or conversational markdown.`;
     }
 
     const json = await response.json();
-    const content = json?.choices?.[0]?.message?.content;
-    if (!content || typeof content !== 'string') {
-      throw new Error(`OpenRouter (${model}) returned an empty response.`);
+    const message = json?.choices?.[0]?.message;
+    let content = message?.content;
+
+    // Some reasoning models return content in message.reasoning or message.content
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      if (typeof message?.reasoning === 'string' && message.reasoning.includes('{')) {
+        content = message.reasoning;
+      } else {
+        throw new Error(`OpenRouter (${model}) returned an empty response.`);
+      }
     }
 
-    const cleaned = content
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim();
-
-    const parsed = JSON.parse(cleaned);
+    const jsonString = extractJsonSubstring(content);
+    const parsed = JSON.parse(jsonString);
     const validation = validateCarDetectionResponse(parsed);
     if (!validation.success) {
       throw new Error(`OpenRouter response failed validation: ${validation.error}`);
@@ -107,7 +128,7 @@ Output ONLY raw JSON with no explanation or conversational markdown.`;
 
 /**
  * Sends a base64-encoded vehicle photo to Gemini Vision with schema-constrained JSON output.
- * If Gemini free quotas are exhausted, automatically fails over to OpenRouter's free vision pool.
+ * If Gemini free quotas are exhausted, automatically fails over to active Gemini models or OpenRouter.
  * Never prints, logs, or exposes API keys.
  */
 export async function identifyCarFromImage(base64Jpeg: string): Promise<GeminiAnalysisResponse> {
@@ -120,6 +141,9 @@ export async function identifyCarFromImage(base64Jpeg: string): Promise<GeminiAn
       'Gemini API key is missing. Add EXPO_PUBLIC_GEMINI_API_KEY (or EXPO_PUBLIC_OPENROUTER_API_KEY) to your local .env file and restart Expo.'
     );
   }
+
+  // Strip any data-uri prefix and whitespace so inline_data always receives valid base64
+  const cleanBase64 = base64Jpeg.replace(/^data:image\/[a-z]+;base64,/i, '').trim();
 
   const geminiModelsToTry = isProxy
     ? [GEMINI_MODEL]
@@ -134,7 +158,7 @@ export async function identifyCarFromImage(base64Jpeg: string): Promise<GeminiAn
         const endpoint = getGeminiEndpoint(model);
 
         const requestBody = isProxy
-          ? { image: base64Jpeg, mime_type: 'image/jpeg' }
+          ? { image: cleanBase64, mime_type: 'image/jpeg' }
           : {
               contents: [
                 {
@@ -143,7 +167,7 @@ export async function identifyCarFromImage(base64Jpeg: string): Promise<GeminiAn
                     {
                       inline_data: {
                         mime_type: 'image/jpeg',
-                        data: base64Jpeg,
+                        data: cleanBase64,
                       },
                     },
                   ],
@@ -220,13 +244,41 @@ export async function identifyCarFromImage(base64Jpeg: string): Promise<GeminiAn
           parsed = jsonResponse;
           rawText = JSON.stringify(jsonResponse, null, 2);
         } else {
-          const candidateText = jsonResponse?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (!candidateText || typeof candidateText !== 'string') {
-            throw new Error('Gemini returned an empty candidate response.');
+          const promptBlock = jsonResponse?.promptFeedback?.blockReason;
+          if (promptBlock) {
+            throw new Error(`Gemini safety filter blocked the image (${promptBlock}). Please ensure the car is clearly visible.`);
           }
+
+          const candidate = jsonResponse?.candidates?.[0];
+          if (!candidate) {
+            throw new Error('Gemini returned an empty candidate list.');
+          }
+
+          if (candidate.finishReason === 'SAFETY') {
+            throw new Error('Gemini safety filter flagged this photo. Please try another angle without people or obstructions.');
+          }
+
+          const parts = candidate.content?.parts || [];
+          // Prioritize non-thought parts containing text
+          const textParts = parts.filter(
+            (p: any) => !p?.thought && typeof p?.text === 'string' && p.text.trim().length > 0
+          );
+
+          let candidateText = '';
+          if (textParts.length > 0) {
+            candidateText = textParts.map((p: any) => p.text).join('').trim();
+          } else {
+            candidateText = parts.map((p: any) => p?.text || '').join('').trim();
+          }
+
+          if (!candidateText) {
+            throw new Error(`Gemini returned an empty response (finishReason: ${candidate.finishReason || 'UNKNOWN'}).`);
+          }
+
           rawText = candidateText;
           try {
-            parsed = JSON.parse(candidateText.trim());
+            const cleanJson = extractJsonSubstring(candidateText);
+            parsed = JSON.parse(cleanJson);
           } catch (parseErr) {
             throw new Error(`Failed to parse structured JSON from model: ${(parseErr as Error).message}`);
           }
@@ -246,18 +298,13 @@ export async function identifyCarFromImage(base64Jpeg: string): Promise<GeminiAn
         const error = err as Error;
         lastError = error;
 
-        // If it's a rate limit (429), high demand (503), or not found (404), fall back to next model
-        const isEligibleForFallback =
-          error.message.includes('404') ||
-          error.message.includes('not found') ||
-          error.message.includes('429') ||
-          error.message.includes('503') ||
-          error.message.includes('high demand') ||
-          error.message.includes('unavailable');
-
-        if (!isEligibleForFallback) {
+        // If credentials are fundamentally invalid, don't keep trying the same key
+        if (error.message.includes('401') || error.message.includes('403')) {
           break;
         }
+
+        // For all other errors (404, 429, 503, empty response, parsing), try the next Gemini fallback model
+        continue;
       }
     }
   }
@@ -268,7 +315,7 @@ export async function identifyCarFromImage(base64Jpeg: string): Promise<GeminiAn
       try {
         const openRouterResponse = await callOpenRouterVision(
           openRouterModel,
-          base64Jpeg,
+          cleanBase64,
           openRouterKey
         );
         return openRouterResponse;

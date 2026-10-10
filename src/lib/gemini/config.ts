@@ -9,18 +9,18 @@
 export const GEMINI_MODEL =
   process.env.EXPO_PUBLIC_GEMINI_MODEL || 'gemini-3.8-flash';
 
-// First Fallback Pool: Gemini 3.5 Flash Lite (low-latency/cost-optimized) -> Gemini 2.5 Flash Lite -> Gemini 3.5 Flash
+// First Fallback Pool: Active Google Gemini models
 export const GEMINI_FALLBACK_MODELS = [
   'gemini-3.8-flash',
+  'gemini-flash-latest',
   'gemini-3.5-flash-lite',
-  'gemini-2.5-flash-lite',
-  'gemini-3.5-flash',
+  'gemini-3.7-flash',
 ];
 
 // Safety Fallback: OpenRouter Free Vision Pool
 export const OPENROUTER_FREE_VISION_MODELS = [
-  'google/gemma-4-26b-a4b-it:free',
   'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+  'google/gemma-4-26b-a4b-it:free',
 ];
 
 export function getGeminiEndpoint(model: string = GEMINI_MODEL): string {
