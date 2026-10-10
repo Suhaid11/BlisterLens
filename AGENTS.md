@@ -1,41 +1,60 @@
-This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+# BlisterLens — AI Agent Guidelines & Architecture
 
-## Expo has changed — do not trust your training data
+BlisterLens is an Expo (React Native + TypeScript) mobile application created as a BCA final-year project for **AI Tools and Techniques**.
 
-Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
+> **Product Identity**: BlisterLens  
+> **Tagline**: Turn a car photo into a pocket-sized collectible.  
+> **Visual Series**: "Street Shelf ’90"  
+> **Core Aesthetic**: Original 90s toy-aisle blister packaging nostalgia (never imitate trademarked toy brands or flame logos).
 
-1. Read the major version of the `expo` package in `package.json`.
-2. Fetch the matching versioned docs: `https://docs.expo.dev/versions/v<major>.0.0/`
-3. For anything else, fetch https://docs.expo.dev/llms.txt — an index of all Expo docs with corrections to common LLM misconceptions. Follow its links to the specific page you need; never answer from memory.
+---
 
-## Commands
+## CRITICAL ARCHITECTURAL RULES
 
-Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
+```text
+shadcn/ui, 21st.dev and GSAP are web-only references and must not be used as React Native dependencies.
 
-```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
+Use react-native-reanimated for React Native animation.
 ```
 
-Run lint and typecheck before declaring any task done.
+- **Clean Boundary Between AI and Local Determinism**:
+  - Gemini Vision answers: *What car is this? (make, model, variant, colour_name, colour_hex, bounding box, confidence, top 3 alternatives)*.
+  - Local runtime answers: *BBox validation, image cropping, colour contrast calculation, deterministic rarity calculation, card canvas rendering, local storage, sharing*.
+  - Never outsource cheap, deterministic computations to an AI model.
 
-## Navigation & Routing
+- **Direct API Key Safety**:
+  - The Gemini API key (`EXPO_PUBLIC_GEMINI_API_KEY`) is stored only in `.env` (gitignored).
+  - Calling Gemini directly from the mobile app is strictly a **private student demo shortcut**. For production or public deployment, requests must be proxied through a secured serverless backend.
+  - NEVER print, log, or hardcode the API key in source files or transcripts.
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
+---
 
-## Building with EAS
+## MILESTONES & WORKFLOW GATING
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
-Docs: https://docs.expo.dev/eas/index.md
+Work proceeds strictly through sequential milestones. **STOP after every milestone**:
+1. Demonstrate the feature running.
+2. Summarize exact changes made.
+3. Run `@ponytail-review` to hunt over-engineering and unnecessary abstractions.
+4. Run a dedicated Safety / Bug / Permission review pass.
+5. Report both review results.
+6. Await explicit user approval before moving to the next milestone.
 
-## Rules
+### Milestone Map
+- **M1**: Scaffold, Branding, Navigation, 90s Toy-Aisle Theme, BlisterCard shell.
+- **M2**: Image Capture / Gallery Selection, Resize (1024px), Gemini Vision Structured Output with runtime validation and error boundaries.
+- **M3**: Bounding Box Normalization & Local Crop, 90s Blister Card Generation, Dynamic Colour Contrast, Deterministic Rarity Engine.
+- **M4**: Low Confidence Confirmation UX (< 60%), ViewShot Card Export, Local Sharing (`expo-sharing`), Local Storage (`AsyncStorage`).
+- **M5**: 20-Photo Empirical Verification, Architecture Documentation, Technical Trade-off Analysis.
 
-- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
-- Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+---
+
+## DEVELOPMENT TOOLING & COMMANDS
+
+```bash
+npx expo start              # Start the Metro dev server
+npx expo lint               # Run linter
+npx tsc --noEmit            # TypeScript typecheck
+```
+
+- When adding Expo-compatible packages, use `npx expo install <package>`.
+- Always check that libraries run in Expo without requiring custom native compilation unless documented.

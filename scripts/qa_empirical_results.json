@@ -1,0 +1,218 @@
+[
+  {
+    "testNum": 1,
+    "category": "Side Profile",
+    "groundTruth": "Chevrolet Corvette (Blue)",
+    "detectedMake": "Chevrolet",
+    "detectedModel": "Camaro",
+    "detectedVariant": "SS",
+    "detectedColour": "Blue",
+    "confidencePct": 98,
+    "latencyMs": 7532,
+    "modelUsed": "gemini-3.5-flash-lite",
+    "carBBox": {
+      "x": 0.152,
+      "y": 328,
+      "width": 662,
+      "height": 451
+    },
+    "cropWindow": {
+      "padX": 0.096,
+      "padY": 0.29,
+      "padW": 0.775,
+      "padH": 0.528,
+      "coveragePct": 73
+    },
+    "coveragePct": 73,
+    "status": "PASS"
+  },
+  {
+    "testNum": 2,
+    "category": "Front 3/4",
+    "groundTruth": "BMW M4 (Grey Metallic)",
+    "detectedMake": "Mercedes-Benz",
+    "detectedModel": "AMG GT",
+    "detectedVariant": "AMG GT R",
+    "detectedColour": "matte black",
+    "confidencePct": 98,
+    "latencyMs": 7716,
+    "modelUsed": "gemini-3.5-flash-lite",
+    "carBBox": {
+      "x": 105,
+      "y": 487,
+      "width": 769,
+      "height": 315
+    },
+    "cropWindow": {
+      "padX": 0.04,
+      "padY": 0.46,
+      "padW": 0.9,
+      "padH": 0.369,
+      "coveragePct": 73
+    },
+    "coveragePct": 73,
+    "status": "PASS"
+  },
+  {
+    "testNum": 3,
+    "category": "Rear 3/4",
+    "groundTruth": "Mercedes-Benz AMG (Silver)",
+    "detectedMake": "Mercedes-Benz",
+    "detectedModel": "AMG GT",
+    "detectedVariant": "AMG GT R Roadster/Coupe",
+    "detectedColour": "Matte Grey",
+    "confidencePct": 98,
+    "latencyMs": 7854,
+    "modelUsed": "gemini-3.5-flash-lite",
+    "carBBox": {
+      "x": 0.05,
+      "y": 0.3,
+      "width": 0.92,
+      "height": 0.53
+    },
+    "cropWindow": {
+      "padX": 0,
+      "padY": 0.255,
+      "padW": 1,
+      "padH": 0.62,
+      "coveragePct": 79
+    },
+    "coveragePct": 79,
+    "status": "PASS"
+  },
+  {
+    "testNum": 4,
+    "category": "Front View",
+    "groundTruth": "Ford Mustang (Red)",
+    "detectedMake": "Ford",
+    "detectedModel": "Mustang",
+    "detectedVariant": "Mach 1",
+    "detectedColour": "Red",
+    "confidencePct": 98,
+    "latencyMs": 5146,
+    "modelUsed": "gemini-3.5-flash-lite",
+    "carBBox": {
+      "x": 0.08,
+      "y": 257,
+      "width": 841,
+      "height": 551
+    },
+    "cropWindow": {
+      "padX": 0.009,
+      "padY": 0.21,
+      "padW": 0.984,
+      "padH": 0.645,
+      "coveragePct": 73
+    },
+    "coveragePct": 73,
+    "status": "PASS"
+  },
+  {
+    "testNum": 5,
+    "category": "Dark Vehicle",
+    "groundTruth": "BMW M4 Coupe (Black)",
+    "detectedMake": "BMW",
+    "detectedModel": "M4",
+    "detectedVariant": "Competition xDrive Coupe",
+    "detectedColour": "red",
+    "confidencePct": 98,
+    "latencyMs": 9458,
+    "modelUsed": "gemini-3.5-flash-lite",
+    "carBBox": {
+      "x": 0.08,
+      "y": 215,
+      "width": 922,
+      "height": 686
+    },
+    "cropWindow": {
+      "padX": 0.002,
+      "padY": 0.157,
+      "padW": 0.998,
+      "padH": 0.803,
+      "coveragePct": 79
+    },
+    "coveragePct": 79,
+    "status": "PASS"
+  },
+  {
+    "testNum": 6,
+    "category": "White/Light Vehicle",
+    "groundTruth": "Tesla Model 3 (Pearl White)",
+    "detectedMake": "Tesla",
+    "detectedModel": "Model 3",
+    "detectedVariant": "Long Range",
+    "detectedColour": "White",
+    "confidencePct": 98,
+    "latencyMs": 6907,
+    "modelUsed": "gemini-3.5-flash-lite",
+    "carBBox": {
+      "x": 371,
+      "y": 502,
+      "width": 505,
+      "height": 339
+    },
+    "cropWindow": {
+      "padX": 0.328,
+      "padY": 0.473,
+      "padW": 0.591,
+      "padH": 0.397,
+      "coveragePct": 73
+    },
+    "coveragePct": 73,
+    "status": "PASS"
+  },
+  {
+    "testNum": 7,
+    "category": "Distant Vehicle",
+    "groundTruth": "Classic Sedan (Distant Outdoor)",
+    "detectedMake": "BMW",
+    "detectedModel": "4 Series Coupe",
+    "detectedVariant": "Standard",
+    "detectedColour": "Blue",
+    "confidencePct": 95,
+    "latencyMs": 4165,
+    "modelUsed": "gemini-3.5-flash-lite",
+    "carBBox": {
+      "x": 0.033,
+      "y": 0.437,
+      "width": 0.895,
+      "height": 0.407
+    },
+    "cropWindow": {
+      "padX": 0,
+      "padY": 0.402,
+      "padW": 1,
+      "padH": 0.476,
+      "coveragePct": 76
+    },
+    "coveragePct": 76,
+    "status": "PASS"
+  },
+  {
+    "testNum": 8,
+    "category": "Close Vehicle",
+    "groundTruth": "Porsche 911 GT3 (Close Action)",
+    "detectedMake": "Porsche",
+    "detectedModel": "Panamera",
+    "detectedVariant": "Turbo",
+    "detectedColour": "black",
+    "confidencePct": 98,
+    "latencyMs": 2870,
+    "modelUsed": "gemini-3.5-flash-lite",
+    "carBBox": {
+      "x": 0.158,
+      "y": 0.301,
+      "width": 0.697,
+      "height": 0.468
+    },
+    "cropWindow": {
+      "padX": 0.099,
+      "padY": 0.261,
+      "padW": 0.815,
+      "padH": 0.548,
+      "coveragePct": 73
+    },
+    "coveragePct": 73,
+    "status": "PASS"
+  }
+]
